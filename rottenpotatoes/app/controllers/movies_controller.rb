@@ -1,12 +1,12 @@
 class MoviesController < ApplicationController
   
   def movie_params
-    params.require(:movie).permit(:title, :rating, :description, :release_date)
+    params.require(:movie).permit(:title, :rating, :description, :release_date, :director)
   end
 
   def show
     id = params[:id] # retrieve movie ID from URI route
-    @movie = Movie.find(id) # look up movie by unique ID
+    @movie = Movie.find(id)# look up movie by unique ID
     # will render app/views/movies/show.<extension> by default
   end
 
@@ -32,7 +32,22 @@ class MoviesController < ApplicationController
     end
     @movies = Movie.where(rating: @selected_ratings.keys).order(ordering)
   end
-
+  
+   # find movies with same director
+  def same_director
+    movie = Movie.find(params[:id])
+    director_name = movie.director
+    
+    if not director_name or director_name.empty?
+      flash[:notice] =  %Q{'#{movie.title}' has no director info}
+      #sad path
+      redirect_to movies_path 
+    else
+      @movies = Movie.find_all_by_director director_name
+      flash[:notice] = "Found #{@movies.count} movie(s) with #{director_name} as director"
+    end
+  end
+  
   def new
     # default: render 'new' template
   end
@@ -58,7 +73,7 @@ class MoviesController < ApplicationController
     @movie = Movie.find(params[:id])
     @movie.destroy
     flash[:notice] = "Movie '#{@movie.title}' deleted."
-    redirect_to movies_path
+    redirect_to root_path
   end
 
 end
